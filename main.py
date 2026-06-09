@@ -192,7 +192,7 @@ def _cosine_similarity(emb1, emb2):
 
 
 if __name__ == "__main__":
-     import os
+    import os
     import uvicorn
 
     port = int(os.environ.get("PORT", 8000))
