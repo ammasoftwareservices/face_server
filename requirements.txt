@@ -1,5 +1,5 @@
 fastapi
-mediapipe
+mediapipe==0.10.14
 numpy
 opencv-python-headless
 python-multipart
