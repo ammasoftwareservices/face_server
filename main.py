@@ -161,7 +161,33 @@ async def login_bootstrap(payload: dict):
     except Exception as error:
         print("LOGIN BOOTSTRAP ERROR:", error)
         raise HTTPException(status_code=500, detail=str(error))
+@app.post("/refresh-school-data")
+async def refresh_school_data(payload: dict):
+    try:
+        school_id = str(payload.get("school_id") or "")
 
+        if not school_id:
+            raise HTTPException(
+                status_code=400,
+                detail="school_id is required"
+            )
+
+        from mssql_sync import get_school_bundle
+
+        bundle = get_school_bundle(school_id)
+
+        return {
+            "success": True,
+            "bundle": bundle,
+        }
+
+    except HTTPException:
+        raise
+    except SyncNotConfiguredError as error:
+        raise HTTPException(status_code=503, detail=str(error))
+    except Exception as error:
+        print("REFRESH SCHOOL DATA ERROR:", error)
+        raise HTTPException(status_code=500, detail=str(error))
 
 async def _read_frame(image: UploadFile):
     data = await image.read()

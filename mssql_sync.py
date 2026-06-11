@@ -457,7 +457,20 @@ def login_and_get_bundle(role: str, user_id: str, password: str) -> dict[str, An
     finally:
         conn.close()
 
+def get_school_bundle(school_id: str) -> dict[str, Any]:
+    conn = _connect()
 
+    try:
+        cursor = conn.cursor()
+
+        return _get_school_bundle(
+            cursor,
+            school_id,
+        )
+
+    finally:
+        conn.close()
+        
 def _get_school_bundle(cursor, school_id: str) -> dict[str, Any]:
     return {
         "school": _fetch_one(
