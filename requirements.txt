@@ -1,8 +1,10 @@
 fastapi
-mediapipe==0.10.14
 numpy
 opencv-python-headless
 python-multipart
 pyodbc
 uvicorn
 gunicorn
+
+insightface==0.7.3
+onnxruntime==1.18.1
