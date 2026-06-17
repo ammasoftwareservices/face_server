@@ -1,6 +1,10 @@
 import os
 import psycopg2
 
+from typing import Any
+from datetime import datetime
+
+from mssql_sync import _fetch_all, _fetch_one, _fetch_one, _fetch_all, _rows_to_dicts, _run_feature_subscription_migration, _run_leave_workflow_migration
 def get_connection():
     return psycopg2.connect(
         os.environ["DATABASE_URL"]
@@ -27,7 +31,6 @@ def test_connection():
     finally:
         conn.close()
 
-from datetime import datetime
 
 def get_next_school_id():
 
@@ -87,7 +90,7 @@ def login_and_get_bundle(role: str, user_id: str, password: str) -> dict[str, An
     table = "admins" if role == "admin" else "teachers"
     id_column = "admin_id" if role == "admin" else "teacher_id"
 
-    conn = _connect()
+    conn = get_connection()
     try:
         cursor = conn.cursor()
         _run_feature_subscription_migration(cursor)
@@ -97,10 +100,9 @@ def login_and_get_bundle(role: str, user_id: str, password: str) -> dict[str, An
         cursor.execute(
             f"""
             SELECT * FROM {table}
-            WHERE {id_column} = ? AND password = ?
+            WHERE {id_column} = %s AND password = %s AND is_active = %s
             """,
-            user_id,
-            password,
+            (user_id, password, True)
         )
         rows = _rows_to_dicts(cursor)
         if not rows:
@@ -121,7 +123,7 @@ def login_and_get_bundle(role: str, user_id: str, password: str) -> dict[str, An
     finally:
         conn.close()
 def get_school_bundle(school_id: str) -> dict[str, Any]:
-    conn = _connect()
+    conn = get_connection()
 
     try:
         cursor = conn.cursor()
@@ -141,7 +143,7 @@ def _get_school_bundle(cursor, school_id: str) -> dict[str, Any]:
             """
             SELECT school_id, name, address, contact, latitude, longitude, logo_path
             FROM schools
-            WHERE school_id = ?
+            WHERE school_id = %s    
             """,
             school_id,
         ),
