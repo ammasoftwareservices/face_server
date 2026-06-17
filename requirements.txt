@@ -2,7 +2,7 @@ fastapi
 numpy
 opencv-python-headless
 python-multipart
-pyodbc
+psycopg2-binary
 uvicorn
 gunicorn
 
