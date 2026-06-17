@@ -1,3 +1,4 @@
+import json
 import os
 import psycopg2
 
@@ -11,6 +12,293 @@ def get_connection():
 class SyncNotConfiguredError(RuntimeError):
     pass
 
+ENTITY_CONFIG = {
+    "super_admin": {
+        "table": "super_admins",
+        "keys": ["super_admin_id"],
+        "columns": [
+            "super_admin_id",
+            "name",
+            "email",
+            "contact",
+            "password",
+            "role",
+            "is_active",
+            "created_at",
+        ],
+    },
+    "school": {
+        "table": "schools",
+        "keys": ["school_id"],
+        "columns": [
+            "school_id",
+            "name",
+            "address",
+            "contact",
+            "latitude",
+            "longitude",
+            "logo_path",
+        ],
+    },
+    "admin": {
+        "table": "admins",
+        "keys": ["admin_id"],
+        "columns": [
+            "admin_id",
+            "school_id",
+            "name",
+            "email",
+            "contact",
+            "address",
+            "role",
+            "password",
+        ],
+    },
+    "school_subscription": {
+        "table": "school_subscriptions",
+        "keys": ["school_id"],
+        "columns": [
+            "school_id",
+            "start_date",
+            "end_date",
+            "status",
+            "updated_at",
+        ],
+    },
+    "school_feature_setting": {
+        "table": "school_feature_settings",
+        "keys": ["school_id", "audience", "feature_code"],
+        "columns": [
+            "school_id",
+            "audience",
+            "feature_code",
+            "enabled",
+            "updated_at",
+        ],
+    },
+    "teacher": {
+        "table": "teachers",
+        "keys": ["teacher_id"],
+        "columns": [
+            "teacher_id",
+            "school_id",
+            "name",
+            "email",
+            "contact",
+            "address",
+            "role",
+            "subject",
+            "qualification",
+            "face_embedding",
+            "password",
+            "is_active",
+            "creted_at",
+        ],
+    },
+    "student": {
+        "table": "students",
+        "keys": ["student_id"],
+        "columns": [
+            "student_id",
+            "school_id",
+            "admission_no",
+            "admission_date",
+            "first_name",
+            "middle_name",
+            "last_name",
+            "full_name",
+            "father_name",
+            "mother_name",
+            "address",
+            "gender",
+            "dob",
+            "class",
+            "section",
+            "session",
+            "class_teacher",
+            "photo_path",
+            "face_embedding",
+            "created_at",
+            "is_active",
+        ],
+    },
+    "subject": {
+        "table": "subjects",
+        "keys": ["school_id", "name"],
+        "columns": ["school_id", "name"],
+    },
+    "class_teacher_assignment": {
+        "table": "class_teacher_assignments",
+        "keys": ["school_id", "class_name", "section"],
+        "columns": [
+            "school_id",
+            "class_name",
+            "section",
+            "teacher_id",
+            "teacher_name",
+        ],
+    },
+    "student_attendance": {
+        "table": "student_attendance",
+        "keys": ["student_id", "school_id", "date"],
+        "columns": ["student_id", "school_id", "date", "status", "timestamp"],
+    },
+    "teacher_attendance": {
+        "table": "teacher_attendance",
+        "keys": ["teacher_id", "school_id", "date"],
+        "columns": ["teacher_id", "school_id", "date", "status", "timestamp"],
+    },
+    "teacher_leave_allocation": {
+        "table": "teacher_leave_allocations",
+        "keys": ["school_id", "teacher_id", "leave_type_code", "year"],
+        "columns": [
+            "school_id",
+            "teacher_id",
+            "leave_type_code",
+            "year",
+            "total_days",
+        ],
+    },
+    "teacher_leave_application": {
+        "table": "teacher_leave_applications",
+        "keys": ["leave_id"],
+        "columns": [
+            "leave_id",
+            "school_id",
+            "teacher_id",
+            "leave_type_code",
+            "from_date",
+            "to_date",
+            "days",
+            "reason",
+            "status",
+            "admin_remarks",
+            "cancel_reason",
+            "decided_by",
+            "decided_at",
+            "updated_at",
+            "created_at",
+        ],
+    },
+    "notification": {
+        "table": "notifications",
+        "keys": ["notification_id"],
+        "columns": [
+            "notification_id",
+            "school_id",
+            "recipient_role",
+            "recipient_id",
+            "title",
+            "message",
+            "type",
+            "reference_id",
+            "is_read",
+            "created_at",
+        ],
+    },
+}
+
+def _insert_sync_event(cursor, event: dict[str, Any]) -> None:
+    cursor.execute(
+    """
+    INSERT INTO sync_events(
+        entity,
+        action,
+        payload_json
+    )
+    VALUES(%s,%s,%s)
+    """,
+    (
+        event["entity"],
+        event["action"],
+        json.dumps(
+            event["payload"]
+        )
+    )
+)
+
+def _upsert(cursor, config, payload):
+    table = config["table"]
+    keys = config["keys"]
+
+    columns = [
+        c for c in config["columns"]
+        if c in payload
+    ]
+
+    if not columns:
+        return
+
+    insert_columns = ", ".join(columns)
+
+    values_placeholders = ", ".join(
+        ["%s"] * len(columns)
+    )
+
+    update_columns = [
+        c for c in columns
+        if c not in keys
+    ]
+
+    conflict_columns = ", ".join(keys)
+
+    if update_columns:
+        update_clause = ", ".join(
+            [
+                f"{c}=EXCLUDED.{c}"
+                for c in update_columns
+            ]
+        )
+
+        sql = f"""
+        INSERT INTO {table}
+        ({insert_columns})
+        VALUES ({values_placeholders})
+        ON CONFLICT ({conflict_columns})
+        DO UPDATE SET
+        {update_clause}
+        """
+    else:
+        sql = f"""
+        INSERT INTO {table}
+        ({insert_columns})
+        VALUES ({values_placeholders})
+        ON CONFLICT ({conflict_columns})
+        DO NOTHING
+        """
+
+    values = [
+        payload.get(c)
+        for c in columns
+    ]
+
+    cursor.execute(sql, values)
+def _delete(cursor, config, payload):
+
+    table = config["table"]
+
+    keys = [
+        k
+        for k in config["keys"]
+        if k in payload
+    ]
+
+    if not keys:
+        return
+
+    where_clause = " AND ".join(
+        [f"{k}=%s" for k in keys]
+    )
+
+    values = [
+        payload[k]
+        for k in keys
+    ]
+
+    cursor.execute(
+        f"DELETE FROM {table} WHERE {where_clause}",
+        values
+    )
 
 def test_connection():
     conn = get_connection()
