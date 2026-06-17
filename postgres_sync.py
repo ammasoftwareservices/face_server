@@ -265,7 +265,7 @@ def _get_school_bundle(cursor, school_id: str) -> dict[str, Any]:
         "teacher_leave_allocations": _fetch_all(
             cursor,
             """
-            SELECT school_id, teacher_id, leave_type_code, [year], total_days
+            SELECT school_id, teacher_id, leave_type_code, year, total_days
             FROM teacher_leave_allocations
             WHERE school_id = %s
             """,
@@ -305,7 +305,7 @@ def _get_school_bundle(cursor, school_id: str) -> dict[str, Any]:
             cursor,
             """
             SELECT notification_id, school_id, recipient_role, recipient_id,
-                   title, message, [type], reference_id,
+                   title, message, type, reference_id,
                    CAST(is_read AS INT) AS is_read, created_at
             FROM notifications
             WHERE school_id = %s
