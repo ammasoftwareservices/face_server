@@ -70,3 +70,9 @@ def get_next_school_id():
 
     finally:
         conn.close()
+def sync_event(event):
+    return {
+        "entity": event.get("entity"),
+        "action": event.get("action"),
+        "status": "ok"
+    }
