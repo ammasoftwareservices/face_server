@@ -4,11 +4,10 @@ import json
 import numpy as np
 
 from face_engine import compare_embeddings, get_embedding
-from mssql_sync import (
-    SyncNotConfiguredError,
+
+from postgres_sync import (
     get_next_school_id,
     login_and_get_bundle,
-    sync_event_to_mssql,
     test_connection,
 )
 
