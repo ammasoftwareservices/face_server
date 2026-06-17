@@ -376,12 +376,64 @@ def get_next_school_id():
 
     finally:
         conn.close()
+
+
 def sync_event(event):
-    return {
-        "entity": event.get("entity"),
-        "action": event.get("action"),
-        "status": "ok"
-    }
+
+    entity = str(event.get("entity") or "")
+    action = str(event.get("action") or "upsert")
+    payload = event.get("payload") or {}
+
+    if entity not in ENTITY_CONFIG:
+        raise ValueError(f"Unsupported sync entity: {entity}")
+
+    config = ENTITY_CONFIG[entity]
+
+    conn = get_connection()
+
+    try:
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO sync_events
+            (
+                entity,
+                action,
+                payload_json
+            )
+            VALUES (%s,%s,%s)
+            """,
+            (
+                entity,
+                action,
+                json.dumps(payload)
+            )
+        )
+
+        if action == "delete":
+            _delete(cursor, config, payload)
+        else:
+            _upsert(cursor, config, payload)
+
+        conn.commit()
+
+        return {
+            "success": True,
+            "entity": entity,
+            "action": action
+        }
+
+    except Exception as e:
+
+        conn.rollback()
+
+        print("SYNC ERROR =", str(e))
+
+        raise
+
+    finally:
+        conn.close()
 def login_and_get_bundle(role: str, user_id: str, password: str) -> dict[str, Any] | None:
     role = role.lower().strip()
     if role not in {"admin", "teacher"}:
