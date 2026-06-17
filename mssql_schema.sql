@@ -114,6 +114,7 @@ CREATE TABLE teachers (
     face_embedding NVARCHAR(MAX) NULL,
     password NVARCHAR(200) NOT NULL,
     created_at DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    modified_id nvarchar(100) NULL,modified_date datetime2 NULL
     CONSTRAINT fk_teachers_school FOREIGN KEY (school_id) REFERENCES schools(school_id)
 );
 
@@ -138,6 +139,7 @@ CREATE TABLE students (
     photo_path NVARCHAR(500) NULL,
     face_embedding NVARCHAR(MAX) NULL,
     created_at DATETIME2 NULL,
+    modified_id nvarchar(100) NULL,modified_date datetime2 NULL
     CONSTRAINT uq_students_admission UNIQUE (school_id, admission_no),
     CONSTRAINT fk_students_school FOREIGN KEY (school_id) REFERENCES schools(school_id)
 );
@@ -330,3 +332,32 @@ LEFT JOIN teacher_attendance ta
     ON ta.teacher_id = t.teacher_id
     AND ta.school_id = t.school_id
 GROUP BY t.school_id, t.teacher_id, t.name, t.subject, YEAR(ta.[date]), MONTH(ta.[date]);
+
+CREATE TABLE teacher_exit_history (
+    exit_id INTEGER PRIMARY KEY identity(1,1),
+    teacher_id TEXT NOT NULL,
+    teacher_name TEXT NOT NULL,
+    school_id TEXT NOT NULL,
+    leaving_date TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    saved_date TEXT
+);
+
+CREATE TABLE student_exit_history(
+    exit_id INTEGER PRIMARY KEY identity(1,1),
+    student_id TEXT,
+    student_name TEXT,
+    father_name TEXT,
+    school_id TEXT,
+    class_name TEXT,
+    section TEXT,
+    leaving_date TEXT,
+    reason TEXT,
+    saved_date TEXT
+);
+
+ALTER TABLE students
+ADD is_active BIT NOT NULL DEFAULT 1;
+
+ALTER TABLE teachers
+ADD is_active BIT NOT NULL DEFAULT 1;
