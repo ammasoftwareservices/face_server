@@ -24,7 +24,7 @@ def test_connection():
     finally:
         conn.close()
 
-  from datetime import datetime
+from datetime import datetime
 
 def get_next_school_id():
 
