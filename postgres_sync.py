@@ -1,5 +1,6 @@
 import json
 import os
+from matplotlib.table import table
 import psycopg2
 
 from typing import Any
@@ -220,7 +221,8 @@ def _insert_sync_event(cursor, event: dict[str, Any]) -> None:
 def _upsert(cursor, config, payload):
     table = config["table"]
     keys = config["keys"]
-
+    print("TABLE =", table)
+    print("KEYS =", keys)
     columns = [
         c for c in config["columns"]
         if c in payload
@@ -490,14 +492,11 @@ def login_and_get_bundle(role: str, user_id: str, password: str) -> dict[str, An
 
         bundle = _get_school_bundle(cursor, school_id)
         return {
-             "school": ...,
-             "admins": ...,
-             "teachers": ...,
-             "students": ...,
-             "student_attendance": ...,
-             "teacher_attendance": ...,
-             "class_teacher_assignments": ...
-        }
+    "role": role,
+    "user": user,
+    "school_id": school_id,
+    "bundle": bundle,
+}
     finally:
         conn.close()
 def get_school_bundle(school_id: str) -> dict[str, Any]:
