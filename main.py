@@ -149,6 +149,8 @@ async def sync_to_server(event: dict):
 @app.post("/login-bootstrap")
 async def login_bootstrap(payload: dict):
     try:
+        print("LOGIN BOOTSTRAP HIT")
+        print(payload)
         result = login_and_get_bundle(
             str(payload.get("role") or ""),
             str(payload.get("user_id") or ""),
