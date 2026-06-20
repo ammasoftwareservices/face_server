@@ -444,6 +444,8 @@ def login_and_get_bundle(role: str, user_id: str, password: str) -> dict[str, An
     table = "admins" if role == "admin" else "teachers"
     id_column = "admin_id" if role == "admin" else "teacher_id"
 
+    print(f"Logging in as {role} with ID {user_id}...")
+
     conn = get_connection()
     try:
         cursor = conn.cursor()
@@ -481,6 +483,7 @@ def login_and_get_bundle(role: str, user_id: str, password: str) -> dict[str, An
             )
 
         rows = _rows_to_dicts(cursor)
+        print("ROWS FOUND =", len(rows))
         if not rows:
             return None
 
