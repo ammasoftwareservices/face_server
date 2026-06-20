@@ -459,28 +459,27 @@ def login_and_get_bundle(role: str, user_id: str, password: str) -> dict[str, An
         #     (user_id, password, True)
         # )
         if role == "teacher":
-         cursor.execute(
-            """
-            SELECT *
-            FROM teachers
-            WHERE teacher_id=%s
-            AND password=%s
-            AND is_active=true
-            """,
-            (user_id, password)
-        )
+            cursor.execute(
+                """
+                SELECT *
+                FROM teachers
+                WHERE teacher_id=%s
+                AND password=%s
+                AND is_active=true
+                """,
+                (user_id, password)
+            )
         else:
-         cursor.execute(
-        """
-        SELECT *
-        FROM admins
-        WHERE admin_id=%s
-        AND password=%s
-        """,
-        (user_id, password)
-        )
-       
-       
+            cursor.execute(
+                """
+                SELECT *
+                FROM admins
+                WHERE admin_id=%s
+                AND password=%s
+                """,
+                (user_id, password)
+            )
+
         rows = _rows_to_dicts(cursor)
         if not rows:
             return None
@@ -492,13 +491,14 @@ def login_and_get_bundle(role: str, user_id: str, password: str) -> dict[str, An
 
         bundle = _get_school_bundle(cursor, school_id)
         return {
-    "role": role,
-    "user": user,
-    "school_id": school_id,
-    "bundle": bundle,
-}
+            "role": role,
+            "user": user,
+            "school_id": school_id,
+            "bundle": bundle,
+        }
     finally:
         conn.close()
+
 def get_school_bundle(school_id: str) -> dict[str, Any]:
     conn = get_connection()
 
