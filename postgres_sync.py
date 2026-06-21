@@ -493,6 +493,7 @@ def login_and_get_bundle(role: str, user_id: str, password: str) -> dict[str, An
             raise ValueError("User has no school_id.")
 
         bundle = _get_school_bundle(cursor, school_id)
+        print(bundle.get("teacher_attendance"))
         return {
             "role": role,
             "user": user,
