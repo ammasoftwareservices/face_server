@@ -249,9 +249,10 @@ def _sync_to_school_database(
         return
 
     school_id = str(school_id)
-    _ensure_school_database(school_id)
+    # _ensure_school_database(school_id)
 
-    conn = _connect(database_override=school_id)
+    # conn = _connect(database_override=school_id)
+    conn = _connect()
     try:
         cursor = conn.cursor()
         if action == "delete":
