@@ -359,6 +359,9 @@ def _connect(database_override: str | None = None, autocommit: bool = False):
         username = os.getenv("MSSQL_USER")
         password = os.getenv("MSSQL_PASSWORD")
         driver = os.getenv("MSSQL_DRIVER") or _best_sql_driver()
+        print("SERVER =", server)
+        print("DATABASE =", database)
+        print("USER =", username)
         if not all([server, database, username, password]):
             raise SyncNotConfiguredError(
                 "MSSQL is not configured. Set MSSQL_CONNECTION_STRING or "
