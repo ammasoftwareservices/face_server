@@ -5,13 +5,13 @@ import numpy as np
 
 from face_engine import compare_embeddings, get_embedding
 
-from postgres_sync import (
+from mssql_sync import (
     SyncNotConfiguredError,
     get_next_school_id,
     login_and_get_bundle,
     test_connection,
     get_school_bundle,
-    sync_event,
+    sync_event_to_mssql,
 )
 
 app = FastAPI(title="AttendancePro Face API", version="1.1.0")
@@ -137,7 +137,7 @@ async def register_face(image: UploadFile = File(...)):
 async def sync_to_server(event: dict):
     try:
        
-        result = sync_event(event)
+        result = sync_event_to_mssql(event)
         return {"success": True, **result}
     except SyncNotConfiguredError as error:
         raise HTTPException(status_code=503, detail=str(error))
@@ -228,28 +228,3 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     print("RAILWAY PORT =", port)
     uvicorn.run(app, host="0.0.0.0", port=port)
-@app.post("/refresh-school-data")
-async def refresh_school_data(payload: dict):
-    try:
-        school_id = str(payload.get("school_id") or "")
-
-        if not school_id:
-            raise HTTPException(
-                status_code=400,
-                detail="school_id is required"
-            )
-
-        bundle = get_school_bundle(school_id)
-
-        return {
-            "success": True,
-            "bundle": bundle,
-        }
-
-    except HTTPException:
-        raise
-    except SyncNotConfiguredError as error:
-        raise HTTPException(status_code=503, detail=str(error))
-    except Exception as error:
-        print("REFRESH SCHOOL DATA ERROR:", error)
-        raise HTTPException(status_code=500, detail=str(error))
