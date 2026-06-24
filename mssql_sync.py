@@ -95,6 +95,7 @@ ENTITY_CONFIG = {
             "qualification",
             "face_embedding",
             "password",
+            "is_active",
         ],
     },
     "student": {
@@ -121,6 +122,7 @@ ENTITY_CONFIG = {
             "photo_path",
             "face_embedding",
             "created_at",
+            "is_active",
         ],
     },
     "subject": {
@@ -500,7 +502,7 @@ def _get_school_bundle(cursor, school_id: str) -> dict[str, Any]:
             SELECT teacher_id, school_id, name, email, contact, address, role,
                    subject, qualification, face_embedding, password
             FROM teachers
-            WHERE school_id = ?
+            WHERE school_id = ? AND is_active = 1
             """,
             school_id,
         ),
@@ -513,25 +515,41 @@ def _get_school_bundle(cursor, school_id: str) -> dict[str, Any]:
                    [class] AS [class], section, session, class_teacher,
                    photo_path, face_embedding, created_at
             FROM students
-            WHERE school_id = ?
+            WHERE school_id = ? AND is_active = 1
             """,
             school_id,
         ),
-        "attendance": _fetch_all(
+       "teacher_attendance": _fetch_all(
             cursor,
             """
-            SELECT student_id, school_id, [date], status, [timestamp]
-            FROM student_attendance
-            WHERE school_id = ?
+            SELECT ta.teacher_id,
+                   ta.school_id,
+                   ta.[date],
+                   ta.status,
+                   ta.[timestamp]
+            FROM teacher_attendance ta
+            INNER JOIN teachers t
+                ON t.teacher_id = ta.teacher_id
+               AND t.school_id = ta.school_id
+            WHERE ta.school_id = ?
+              AND t.is_active = 1
             """,
             school_id,
         ),
-        "teacher_attendance": _fetch_all(
+       "attendance": _fetch_all(
             cursor,
             """
-            SELECT teacher_id, school_id, [date], status, [timestamp]
-            FROM teacher_attendance
-            WHERE school_id = ?
+            SELECT sa.student_id,
+                   sa.school_id,
+                   sa.[date],
+                   sa.status,
+                   sa.[timestamp]
+            FROM student_attendance sa
+            INNER JOIN students s
+                ON s.student_id = sa.student_id
+               AND s.school_id = sa.school_id
+            WHERE sa.school_id = ?
+              AND s.is_active = 1
             """,
             school_id,
         ),
